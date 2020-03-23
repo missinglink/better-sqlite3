@@ -522,7 +522,7 @@ void Database::JS_exec (v8::FunctionCallbackInfo <v8 :: Value> const & info)
                 if ( info . Length ( ) <= ( 0 ) || ! info [ 0 ] -> IsString ( ) ) return ThrowTypeError ( "Expected " "first" " argument to be " "a string" ) ; v8 :: Local < v8 :: String > source = v8 :: Local < v8 :: String > :: Cast ( info [ 0 ] ) ;
                 if ( ! db -> open ) return ThrowTypeError ( "The database connection is not open" ) ;
                 if ( db -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
-                if ( db -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
+                if ( db -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
                 db->busy = true;
                 v8 :: Isolate * isolate = info . GetIsolate ( ) ;
                 if (db->Log(isolate, source)) {
@@ -549,7 +549,7 @@ void Database::JS_checkpoint (v8::FunctionCallbackInfo <v8 :: Value> const & inf
                 Database* db = node :: ObjectWrap :: Unwrap <Database>(info.This());
                 if ( ! db -> open ) return ThrowTypeError ( "The database connection is not open" ) ;
                 if ( db -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
-                if ( db -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
+                if ( db -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
                 sqlite3* db_handle = db->db_handle;
 
                 if (info.Length()) {
@@ -610,7 +610,7 @@ void Database::JS_function (v8::FunctionCallbackInfo <v8 :: Value> const & info)
                 if ( info . Length ( ) <= ( 4 ) || ! info [ 4 ] -> IsBoolean ( ) ) return ThrowTypeError ( "Expected " "fifth" " argument to be " "a boolean" ) ; bool deterministic = v8 :: Local < v8 :: Boolean > :: Cast ( info [ 4 ] ) -> Value ( ) ;
                 if ( ! db -> open ) return ThrowTypeError ( "The database connection is not open" ) ;
                 if ( db -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
-                if ( db -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
+                if ( db -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
 
                 v8 :: Isolate * isolate = info . GetIsolate ( ) ;
                 v8::String::Utf8Value name(EXTRACT_STRING(isolate, nameString));
@@ -637,7 +637,7 @@ void Database::JS_aggregate (v8::FunctionCallbackInfo <v8 :: Value> const & info
                 if ( info . Length ( ) <= ( 7 ) || ! info [ 7 ] -> IsBoolean ( ) ) return ThrowTypeError ( "Expected " "eighth" " argument to be " "a boolean" ) ; bool deterministic = v8 :: Local < v8 :: Boolean > :: Cast ( info [ 7 ] ) -> Value ( ) ;
                 if ( ! db -> open ) return ThrowTypeError ( "The database connection is not open" ) ;
                 if ( db -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
-                if ( db -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
+                if ( db -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
 
                 v8 :: Isolate * isolate = info . GetIsolate ( ) ;
                 v8::String::Utf8Value name(EXTRACT_STRING(isolate, nameString));
@@ -659,7 +659,7 @@ void Database::JS_loadExtension (v8::FunctionCallbackInfo <v8 :: Value> const & 
                 if ( info . Length ( ) <= ( 0 ) || ! info [ 0 ] -> IsString ( ) ) return ThrowTypeError ( "Expected " "first" " argument to be " "a string" ) ; v8 :: Local < v8 :: String > filenameString = v8 :: Local < v8 :: String > :: Cast ( info [ 0 ] ) ;
                 if ( ! db -> open ) return ThrowTypeError ( "The database connection is not open" ) ;
                 if ( db -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
-                if ( db -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
+                if ( db -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
                 v8::String::Utf8Value filename(EXTRACT_STRING( info . GetIsolate ( ) , filenameString));
                 char* error;
                 int status = sqlite3_load_extension(db->db_handle, *filename, NULL, &error);
@@ -674,7 +674,7 @@ void Database::JS_close (v8::FunctionCallbackInfo <v8 :: Value> const & info)
                 Database* db = node :: ObjectWrap :: Unwrap <Database>(info.This());
                 if (db->open) {
                         if ( db -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
-                        if ( db -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
+                        if ( db -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
                         dbs.erase(db);
                         db->CloseHandles();
                 }
@@ -829,7 +829,7 @@ void Statement::JS_new (v8::FunctionCallbackInfo <v8 :: Value> const & info)
                 Database* db = node :: ObjectWrap :: Unwrap <Database>(database);
                 if ( ! db -> GetState ( ) -> open ) return ThrowTypeError ( "The database connection is not open" ) ;
                 if ( db -> GetState ( ) -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ;
-                if (db->GetState()->pragma_mode) { if ( db -> GetState ( ) -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ; }
+                if (db->GetState()->pragma_mode) { if ( db -> GetState ( ) -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ; }
 
                 v8 :: Isolate * isolate = info . GetIsolate ( ) ;
                 v8::String::Value sql(EXTRACT_STRING(isolate, source));
@@ -864,7 +864,7 @@ void Statement::JS_new (v8::FunctionCallbackInfo <v8 :: Value> const & info)
 void Statement::JS_run (v8::FunctionCallbackInfo <v8 :: Value> const & info)
 #line 139 "./src/objects/statement.lzz"
                             {
-                Statement * stmt = node :: ObjectWrap :: Unwrap < Statement > ( info . This ( ) ) ; if ( stmt -> returns_data ) return ThrowTypeError ( "This statement returns data. Use get(), all(), or iterate() instead" ) ; sqlite3_stmt * handle = stmt -> handle ; Database * db = stmt -> db ; if ( ! db -> GetState ( ) -> open ) return ThrowTypeError ( "The database connection is not open" ) ; if ( db -> GetState ( ) -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ; if ( db -> GetState ( ) -> iterators ) return ThrowTypeError ( "This database connection is busy executing a query" ) ; const bool bound = stmt -> bound ; if ( ! bound ) { Binder binder ( handle ) ; if ( ! binder . Bind ( info , info . Length ( ) , stmt ) ) { sqlite3_clear_bindings ( handle ) ; return ; } ( ( void ) 0 ) ; } else if ( info . Length ( ) > 0 ) { return ThrowTypeError ( "This statement already has bound parameters" ) ; } ( ( void ) 0 ) ; db -> GetState ( ) -> busy = true ; v8 :: Isolate * isolate = info . GetIsolate ( ) ; if ( db -> Log ( isolate , handle ) ) { db -> GetState ( ) -> busy = false ; db -> ThrowDatabaseError ( ) ; if ( ! bound ) { sqlite3_clear_bindings ( handle ) ; } return ; } ( ( void ) 0 ) ;
+                Statement * stmt = node :: ObjectWrap :: Unwrap < Statement > ( info . This ( ) ) ; if ( stmt -> returns_data ) return ThrowTypeError ( "This statement returns data. Use get(), all(), or iterate() instead" ) ; sqlite3_stmt * handle = stmt -> handle ; Database * db = stmt -> db ; if ( ! db -> GetState ( ) -> open ) return ThrowTypeError ( "The database connection is not open" ) ; if ( db -> GetState ( ) -> busy ) return ThrowTypeError ( "This database connection is busy executing a query" ) ; if ( db -> GetState ( ) -> iterators && ! getenv ( "UNSAFE_MODE" ) ) return ThrowTypeError ( "This database connection is busy executing a query" ) ; const bool bound = stmt -> bound ; if ( ! bound ) { Binder binder ( handle ) ; if ( ! binder . Bind ( info , info . Length ( ) , stmt ) ) { sqlite3_clear_bindings ( handle ) ; return ; } ( ( void ) 0 ) ; } else if ( info . Length ( ) > 0 ) { return ThrowTypeError ( "This statement already has bound parameters" ) ; } ( ( void ) 0 ) ; db -> GetState ( ) -> busy = true ; v8 :: Isolate * isolate = info . GetIsolate ( ) ; if ( db -> Log ( isolate , handle ) ) { db -> GetState ( ) -> busy = false ; db -> ThrowDatabaseError ( ) ; if ( ! bound ) { sqlite3_clear_bindings ( handle ) ; } return ; } ( ( void ) 0 ) ;
                 sqlite3* db_handle = db->GetHandle();
                 int total_changes_before = sqlite3_total_changes(db_handle);
 
