@@ -28,6 +28,7 @@ public:
 	static ConstantString type;
 	static ConstantString totalPages;
 	static ConstantString remainingPages;
+	static ConstantString unsafe;
 
 private:
 	REGISTER(Init) {
@@ -50,6 +51,7 @@ private:
 		AddString(isolate, CS::type, "type");
 		AddString(isolate, CS::totalPages, "totalPages");
 		AddString(isolate, CS::remainingPages, "remainingPages");
+		AddString(isolate, CS::unsafe, "unsafe");
 
 		AddCode(isolate, SQLITE_OK, "SQLITE_OK");
 		AddCode(isolate, SQLITE_ERROR, "SQLITE_ERROR");

@@ -175,7 +175,15 @@ private:
 
 	NODE_METHOD(JS_prepare) {
 		REQUIRE_ARGUMENT_STRING(first, v8::Local<v8::String> source);
-		v8::MaybeLocal<v8::Object> maybe_statement = Statement::New(OnlyIsolate, info.This(), source);
+
+		// optionally enable unsafe mode
+		bool unsafe = false;
+		if (info.Length() > 1) {
+			REQUIRE_ARGUMENT_BOOLEAN(second, unsafe);
+		}
+
+		UseIsolate;
+		v8::MaybeLocal<v8::Object> maybe_statement = Statement::New(isolate, info.This(), source, unsafe ? v8::True(isolate) : v8::False(isolate));
 		if (!maybe_statement.IsEmpty()) info.GetReturnValue().Set(maybe_statement.ToLocalChecked());
 	}
 
